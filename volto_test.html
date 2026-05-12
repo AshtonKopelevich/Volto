@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volto — Test Bench</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0f12;
+    --bg2:      #13161b;
+    --bg3:      #1a1e25;
+    --border:   #252932;
+    --border2:  #2e3540;
+    --green:    #3dffa0;
+    --green-dim:#1a7a4a;
+    --teal:     #2dd4bf;
+    --amber:    #fbbf24;
+    --red:      #f87171;
+    --muted:    #4a5568;
+    --text:     #c8d0dc;
+    --text2:    #7a8899;
+    --mono:     'JetBrains Mono', monospace;
+    --sans:     'Space Grotesk', sans-serif;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; }
+
+  body { display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: 280px 1fr; grid-template-areas: "header header" "sidebar main" "footer footer"; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    grid-area: header;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg2);
+  }
+  .logo { font-weight: 700; font-size: 15px; color: var(--green); letter-spacing: 0.08em; }
+  .logo span { color: var(--text2); font-weight: 300; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--green-dim); color: var(--green); font-weight: 500; letter-spacing: 0.05em; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: background 0.3s; }
+  .status-dot.ok  { background: var(--green); box-shadow: 0 0 6px var(--green-dim); }
+  .status-dot.err { background: var(--red); }
+  .status-label { font-size: 11px; color: var(--text2); }
+
+  /* ── SIDEBAR ── */
+  aside {
+    grid-area: sidebar;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .section-label { font-size: 10px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--text2); }
+  .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+    font-family: var(--mono); font-size: 12px; padding: 7px 9px; border-radius: 4px;
+    outline: none; transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green-dim); }
+  .field select option { background: var(--bg3); }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--green); height: 3px; }
+  .slider-val { font-size: 11px; color: var(--green); min-width: 36px; text-align: right; }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  #system-prompt { resize: vertical; min-height: 110px; line-height: 1.5; font-size: 11px; }
+
+  /* ── MAIN PANEL ── */
+  main {
+    grid-area: main;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  #output {
+    flex: 1; overflow-y: auto; padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  .msg { display: flex; flex-direction: column; gap: 4px; animation: fadeIn 0.15s ease; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform:none; } }
+
+  .msg-meta { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .msg-meta .tag { padding: 1px 6px; border-radius: 2px; font-weight: 500; }
+  .tag-user   { background: #1a2535; color: var(--teal); }
+  .tag-volto  { background: #0f2a1a; color: var(--green); }
+  .tag-system { background: #1f1a0d; color: var(--amber); }
+  .tag-error  { background: #2a0f0f; color: var(--red); }
+
+  .msg-body {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 12px 14px;
+    line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg-body.user-body   { border-left: 2px solid var(--teal); }
+  .msg-body.volto-body  { border-left: 2px solid var(--green); }
+  .msg-body.error-body  { border-left: 2px solid var(--red); color: var(--red); }
+  .msg-body.system-body { border-left: 2px solid var(--amber); color: var(--amber); font-size: 11px; }
+
+  .cmd-line  { color: var(--green); font-weight: 500; }
+  .why-line  { color: var(--text2); }
+
+  .timing { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  #live-timer {
+    font-size: 11px; font-family: var(--mono);
+    color: var(--amber); letter-spacing: 0.05em;
+    min-width: 52px; text-align: right;
+    display: none;
+  }
+  #live-timer.running { display: block; }
+
+  /* ── HISTORY PANEL ── */
+  #history-panel {
+    position: fixed; top: 0; right: -380px; width: 360px; height: 100vh;
+    background: var(--bg2); border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transition: right 0.25s ease; z-index: 100;
+  }
+  #history-panel.open { right: 0; }
+  .hist-header {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hist-header span { font-size: 11px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; }
+  .hist-header-actions { display: flex; gap: 6px; align-items: center; }
+  .hist-close {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 2px 4px;
+  }
+  .hist-close:hover { color: var(--text); }
+  #hist-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .hist-item {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 9px 11px; cursor: pointer;
+    transition: border-color 0.15s; display: flex; flex-direction: column; gap: 4px;
+  }
+  .hist-item:hover { border-color: var(--green-dim); }
+  .hist-item.active { border-color: var(--green); }
+  .hist-query { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hist-output { font-size: 10px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
+  .hist-meta  { font-size: 10px; color: var(--muted); display: flex; gap: 8px; }
+  .hist-ttfb  { color: var(--teal); }
+  .hist-total { color: var(--amber); }
+  .hist-model { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+  .hist-empty { font-size: 11px; color: var(--muted); text-align: center; margin-top: 40px; }
+  .hist-btn {
+    background: transparent; border: 1px solid var(--border2);
+    color: var(--text2); font-family: var(--mono); font-size: 11px;
+    padding: 5px 10px; border-radius: 4px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .hist-btn:hover { border-color: var(--green-dim); color: var(--green); }
+
+  .cursor::after { content: '▋'; animation: blink 0.9s step-end infinite; color: var(--green); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); gap: 8px; }
+  .empty-state .big { font-size: 28px; opacity: 0.3; }
+  .empty-state p { font-size: 11px; }
+
+  /* ── INPUT BAR ── */
+  .input-bar {
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 12px 16px;
+    display: flex; align-items: flex-end; gap: 10px;
+  }
+  .prompt-prefix { color: var(--green); font-size: 13px; padding-bottom: 8px; user-select: none; }
+  #query-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+    resize: none; line-height: 1.5; max-height: 120px; overflow-y: auto;
+    padding: 6px 0;
+  }
+  #query-input::placeholder { color: var(--muted); }
+
+  .send-btn {
+    background: var(--green-dim); border: 1px solid var(--green);
+    color: var(--green); font-family: var(--mono); font-size: 11px;
+    font-weight: 500; padding: 7px 14px; border-radius: 4px;
+    cursor: pointer; transition: background 0.15s; white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+  .send-btn:hover { background: #22664a; }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .clear-btn {
+    background: transparent; border: 1px solid var(--border2);
+    color: var(--text2); font-family: var(--mono); font-size: 11px;
+    padding: 7px 10px; border-radius: 4px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .clear-btn:hover { border-color: var(--muted); }
+
+  /* ── FOOTER ── */
+  footer {
+    grid-area: footer;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    padding: 5px 20px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 10px; color: var(--muted);
+  }
+  .stat { display: flex; gap: 5px; }
+  .stat-val { color: var(--text2); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">VOLTO<span> / test bench</span></div>
+  <div class="badge">local</div>
+  <div class="header-right">
+    <span id="live-timer">0.0s</span>
+    <div class="status-dot" id="status-dot"></div>
+    <div class="status-label" id="status-label">checking...</div>
+    <button class="hist-btn" onclick="toggleHistory()">History</button>
+  </div>
+</header>
+
+<div id="history-panel">
+  <div class="hist-header">
+    <span>Run history</span>
+    <div class="hist-header-actions">
+      <button class="hist-btn" onclick="exportCSV()" title="Export as CSV">↓ CSV</button>
+      <button class="hist-btn" onclick="exportJSON()" title="Export as JSON">↓ JSON</button>
+      <button class="hist-close" onclick="toggleHistory()">&#x2715;</button>
+    </div>
+  </div>
+  <div id="hist-list"><div class="hist-empty">No runs yet.</div></div>
+</div>
+
+<aside>
+  <!-- Connection -->
+  <div>
+    <div class="section-label">Connection</div>
+    <div class="field">
+      <label>Ollama host</label>
+      <input id="host" type="text" value="http://localhost:11434" placeholder="http://192.168.x.x:11434">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Model</label>
+      <select id="model-select">
+        <option value="">— fetch models —</option>
+      </select>
+    </div>
+    <button class="clear-btn" style="margin-top:8px;width:100%" onclick="fetchModels()">Refresh models</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Variant -->
+  <div>
+    <div class="section-label">Variant</div>
+    <div class="field">
+      <label>Command variant</label>
+      <select id="variant" onchange="applyVariant()">
+        <option value="v1">V1 — general query</option>
+        <option value="v2">V2 — directory aware</option>
+        <option value="v3">V3 — file aware</option>
+        <option value="raw">Raw — custom prompt only</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Parameters -->
+  <div>
+    <div class="section-label">Parameters</div>
+
+    <div class="field">
+      <label>num_ctx</label>
+      <div class="slider-row">
+        <input type="range" id="num_ctx" min="512" max="8192" step="256" value="1024" oninput="document.getElementById('num_ctx_val').textContent=this.value">
+        <span class="slider-val" id="num_ctx_val">1024</span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>num_predict (max tokens out)</label>
+      <div class="slider-row">
+        <input type="range" id="num_predict" min="32" max="512" step="8" value="120" oninput="document.getElementById('num_predict_val').textContent=this.value">
+        <span class="slider-val" id="num_predict_val">120</span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>temperature</label>
+      <div class="slider-row">
+        <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.1" oninput="document.getElementById('temperature_val').textContent=parseFloat(this.value).toFixed(2)">
+        <span class="slider-val" id="temperature_val">0.10</span>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:10px">
+      <label>stop sequence</label>
+      <input id="stop_seq" type="text" value="\n\n" placeholder="\n\n or leave blank">
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- System prompt -->
+  <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+    <div class="section-label">System prompt</div>
+    <textarea id="system-prompt" class="field" spellcheck="false"></textarea>
+  </div>
+
+  <!-- Extra context (V2/V3) -->
+  <div id="extra-ctx-section" style="display:none">
+    <div class="section-label">Extra context</div>
+    <div class="field">
+      <label id="extra-ctx-label">Directory listing / file snippet</label>
+      <textarea id="extra-ctx" style="min-height:80px;resize:vertical;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;border-radius:4px;outline:none;width:100%;line-height:1.5" placeholder="Paste ls output or file head/tail here..." spellcheck="false"></textarea>
+    </div>
+  </div>
+</aside>
+
+<main>
+  <div id="output">
+    <div class="empty-state" id="empty-state">
+      <div class="big">&gt;_</div>
+      <p>Send a query to begin testing.</p>
+      <p style="margin-top:4px">Configure model and variant in the sidebar.</p>
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="prompt-prefix">$</div>
+    <textarea id="query-input" rows="1" placeholder="Enter task or question..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="clear-btn" onclick="clearOutput()">Clear</button>
+    <button class="send-btn" id="send-btn" onclick="sendQuery()">Send ↵</button>
+  </div>
+</main>
+
+<footer>
+  <div class="stat">requests <span class="stat-val" id="stat-req">0</span></div>
+  <div class="stat">last ttfb <span class="stat-val" id="stat-ttfb">—</span></div>
+  <div class="stat">last total <span class="stat-val" id="stat-total">—</span></div>
+  <div class="stat">tokens out <span class="stat-val" id="stat-tokens">—</span></div>
+</footer>
+
+<script>
+const VARIANTS = {
+  v1: {
+    system: `You are Volto, a CLI command assistant running on a local LLM.
+Respond ONLY in this exact format — nothing else:
+
+CMD: <the command or short script>
+WHY: <one sentence max>
+
+Rules:
+- No markdown. No code fences. No preamble. No alternatives.
+- Chain multiple commands with && or use a heredoc.
+- If the task is impossible on Linux, output: CMD: # not possible  WHY: <reason>`,
+    ctx: 1024, predict: 120
+  },
+  v2: {
+    system: `You are Volto, a CLI command assistant. You are given a directory listing.
+Respond ONLY in this exact format — nothing else:
+
+CMD: <the command, tailored to the actual project structure shown>
+WHY: <one sentence max>
+
+Rules:
+- No markdown. No code fences. No preamble.
+- Use filenames and paths visible in the listing.
+- If ambiguous, pick the most common convention for the detected project type.`,
+    ctx: 2048, predict: 150
+  },
+  v3: {
+    system: `You are Volto, a CLI command assistant. You are given a file excerpt (head + tail).
+Respond ONLY in this exact format — nothing else:
+
+CMD: <the command, referencing specific lines or patterns from the file>
+WHY: <one sentence max>
+
+Rules:
+- No markdown. No code fences. No preamble.
+- The file excerpt may be truncated — do not assume you have the full file.
+- Base your command on what is visible. Flag uncertainty in WHY if needed.`,
+    ctx: 2048, predict: 200
+  },
+  raw: {
+    system: ``,
+    ctx: 2048, predict: 256
+  }
+};
+
+let reqCount = 0;
+let currentController = null;
+let timerInterval = null;
+let runHistory = [];
+
+function startTimer() {
+  const el = document.getElementById('live-timer');
+  el.classList.add('running');
+  const t0 = performance.now();
+  timerInterval = setInterval(() => {
+    el.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
+  }, 100);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  const el = document.getElementById('live-timer');
+  el.classList.remove('running');
+  el.textContent = '0.0s';
+}
+
+function toggleHistory() {
+  document.getElementById('history-panel').classList.toggle('open');
+}
+
+function addHistoryEntry(entry) {
+  runHistory.unshift(entry);
+  const list = document.getElementById('hist-list');
+  list.querySelector('.hist-empty')?.remove();
+  const item = document.createElement('div');
+  item.className = 'hist-item';
+  const good = entry.ttfb !== null;
+  item.innerHTML = `
+    <div class="hist-query">${esc(entry.query)}</div>
+    <div class="hist-output">${esc(entry.output || '')}</div>
+    <div class="hist-meta">
+      <span class="hist-ttfb">ttfb ${good ? entry.ttfb.toFixed(0)+'ms' : '—'}</span>
+      <span class="hist-total">${entry.total.toFixed(2)}s</span>
+      <span class="hist-model">${esc(entry.model)}</span>
+    </div>
+    <div class="hist-meta">
+      <span style="color:var(--text2)">${esc(entry.variant)}</span>
+      <span>ctx ${entry.num_ctx}</span>
+      <span>pred ${entry.num_predict}</span>
+      <span>t ${parseFloat(entry.temperature).toFixed(2)}</span>
+    </div>`;
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.hist-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('query-input').value = entry.query;
+    autoResize(document.getElementById('query-input'));
+    document.getElementById('num_ctx').value = entry.num_ctx;
+    document.getElementById('num_ctx_val').textContent = entry.num_ctx;
+    document.getElementById('num_predict').value = entry.num_predict;
+    document.getElementById('num_predict_val').textContent = entry.num_predict;
+    document.getElementById('temperature').value = entry.temperature;
+    document.getElementById('temperature_val').textContent = parseFloat(entry.temperature).toFixed(2);
+  });
+  list.prepend(item);
+}
+
+// ── Export functions ──
+
+function exportCSV() {
+  if (!runHistory.length) {
+    alert('No runs to export yet.');
+    return;
+  }
+  const headers = ['timestamp', 'query', 'output', 'model', 'variant', 'ttfb_ms', 'total_s', 'num_ctx', 'num_predict', 'temperature'];
+  const rows = runHistory.map(r => [
+    '"' + (r.timestamp || '') + '"',
+    '"' + (r.query  || '').replace(/"/g, '""') + '"',
+    '"' + (r.output || '').replace(/"/g, '""') + '"',
+    '"' + (r.model  || '').replace(/"/g, '""') + '"',
+    r.variant,
+    r.ttfb !== null ? r.ttfb.toFixed(1) : '',
+    r.total.toFixed(3),
+    r.num_ctx,
+    r.num_predict,
+    parseFloat(r.temperature).toFixed(2)
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  download('volto-results.csv', csv, 'text/csv');
+}
+
+function exportJSON() {
+  if (!runHistory.length) {
+    alert('No runs to export yet.');
+    return;
+  }
+  download('volto-results.json', JSON.stringify(runHistory, null, 2), 'application/json');
+}
+
+function download(filename, content, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── init ──
+applyVariant();
+fetchModels();
+checkStatus();
+
+function applyVariant() {
+  const v = document.getElementById('variant').value;
+  const cfg = VARIANTS[v];
+  document.getElementById('system-prompt').value = cfg.system;
+  document.getElementById('num_ctx').value = cfg.ctx;
+  document.getElementById('num_ctx_val').textContent = cfg.ctx;
+  document.getElementById('num_predict').value = cfg.predict;
+  document.getElementById('num_predict_val').textContent = cfg.predict;
+
+  const extraSection = document.getElementById('extra-ctx-section');
+  const label = document.getElementById('extra-ctx-label');
+  if (v === 'v2') {
+    extraSection.style.display = 'block';
+    label.textContent = 'Directory listing (ls output)';
+  } else if (v === 'v3') {
+    extraSection.style.display = 'block';
+    label.textContent = 'File excerpt (head + tail)';
+  } else {
+    extraSection.style.display = 'none';
+  }
+}
+
+async function checkStatus() {
+  const host = document.getElementById('host').value.trim();
+  try {
+    const r = await fetch(`${host}/api/tags`, { signal: AbortSignal.timeout(3000) });
+    if (r.ok) { setStatus('ok', 'connected'); }
+    else { setStatus('err', 'unreachable'); }
+  } catch { setStatus('err', 'offline'); }
+}
+
+function setStatus(state, label) {
+  document.getElementById('status-dot').className = 'status-dot ' + state;
+  document.getElementById('status-label').textContent = label;
+}
+
+async function fetchModels() {
+  const host = document.getElementById('host').value.trim();
+  setStatus('', 'checking...');
+  try {
+    const r = await fetch(`${host}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const sel = document.getElementById('model-select');
+    sel.innerHTML = '';
+    const models = data.models || [];
+    if (models.length === 0) {
+      sel.innerHTML = '<option value="">no models found</option>';
+    } else {
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.name;
+        opt.textContent = m.name;
+        if (m.name.includes('qwen')) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+    setStatus('ok', 'connected');
+  } catch {
+    setStatus('err', 'failed to fetch');
+    addMessage('error', 'system', `Could not reach Ollama at ${host}. Check host and that ollama serve is running.`);
+  }
+}
+
+async function sendQuery() {
+  const query = document.getElementById('query-input').value.trim();
+  if (!query) return;
+
+  const host    = document.getElementById('host').value.trim();
+  const model   = document.getElementById('model-select').value;
+  const system  = document.getElementById('system-prompt').value.trim();
+  const variant = document.getElementById('variant').value;
+  const extra   = document.getElementById('extra-ctx').value.trim();
+
+  if (!model) { addMessage('error', 'system', 'No model selected. Click "Refresh models".'); return; }
+
+  let userText = query;
+  if ((variant === 'v2' || variant === 'v3') && extra) {
+    const label = variant === 'v2' ? 'DIRECTORY LISTING' : 'FILE EXCERPT';
+    userText = `${query}\n\n--- ${label} ---\n${extra}`;
+  }
+
+  const options = {
+    num_ctx:     parseInt(document.getElementById('num_ctx').value),
+    num_predict: parseInt(document.getElementById('num_predict').value),
+    temperature: parseFloat(document.getElementById('temperature').value),
+  };
+  const stopRaw = document.getElementById('stop_seq').value;
+  if (stopRaw) options.stop = [stopRaw.replace(/\\n/g, '\n')];
+
+  document.getElementById('empty-state')?.remove();
+  addMessage('user', 'you', userText);
+  document.getElementById('query-input').value = '';
+  autoResize(document.getElementById('query-input'));
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.textContent = 'streaming…';
+
+  reqCount++;
+  document.getElementById('stat-req').textContent = reqCount;
+  startTimer();
+
+  const t0 = performance.now();
+  let ttfb = null;
+  let tokenCount = 0;
+
+  const { msgEl, bodyEl } = createStreamingMessage();
+  bodyEl.classList.add('cursor');
+
+  currentController = new AbortController();
+
+  try {
+    const resp = await fetch(`${host}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, system, prompt: userText, stream: true, options }),
+      signal: currentController.signal,
+    });
+
+    if (!resp.ok) {
+      const err = await resp.text();
+      bodyEl.classList.remove('cursor');
+      bodyEl.classList.add('error-body');
+      bodyEl.textContent = `HTTP ${resp.status}: ${err}`;
+      return;
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const lines = decoder.decode(value).split('\n').filter(Boolean);
+      for (const line of lines) {
+        try {
+          const chunk = JSON.parse(line);
+          if (chunk.response) {
+            if (ttfb === null) {
+              ttfb = performance.now() - t0;
+              document.getElementById('stat-ttfb').textContent = ttfb.toFixed(0) + 'ms';
+            }
+            fullText += chunk.response;
+            tokenCount++;
+            renderOutput(bodyEl, fullText);
+            scrollToBottom();
+          }
+          if (chunk.done) break;
+        } catch {}
+      }
+    }
+
+    bodyEl.classList.remove('cursor');
+    const total = performance.now() - t0;
+    stopTimer();
+    document.getElementById('stat-total').textContent = (total / 1000).toFixed(2) + 's';
+    document.getElementById('stat-tokens').textContent = tokenCount;
+
+    addHistoryEntry({
+      timestamp:   new Date().toISOString(),
+      query:       query,
+      output:      fullText,
+      model,
+      variant:     document.getElementById('variant').value,
+      ttfb,
+      total:       total / 1000,
+      num_ctx:     parseInt(document.getElementById('num_ctx').value),
+      num_predict: parseInt(document.getElementById('num_predict').value),
+      temperature: document.getElementById('temperature').value,
+    });
+
+    const timingEl = document.createElement('div');
+    timingEl.className = 'timing';
+    timingEl.textContent = `ttfb ${ttfb ? ttfb.toFixed(0) : '?'}ms · total ${(total/1000).toFixed(2)}s · ~${tokenCount} chunks · ${model}`;
+    msgEl.appendChild(timingEl);
+
+  } catch (e) {
+    stopTimer();
+    bodyEl.classList.remove('cursor');
+    if (e.name !== 'AbortError') {
+      bodyEl.classList.add('error-body');
+      bodyEl.textContent = `Error: ${e.message}`;
+    } else {
+      bodyEl.textContent += ' [aborted]';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send ↵';
+    currentController = null;
+  }
+}
+
+function renderOutput(el, text) {
+  const lines = text.split('\n');
+  el.innerHTML = lines.map(line => {
+    if (line.startsWith('CMD:')) return `<span class="cmd-line">${esc(line)}</span>`;
+    if (line.startsWith('WHY:')) return `<span class="why-line">${esc(line)}</span>`;
+    return esc(line);
+  }).join('\n');
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function createStreamingMessage() {
+  const output = document.getElementById('output');
+  const msgEl = document.createElement('div');
+  msgEl.className = 'msg';
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  const tag = document.createElement('span');
+  tag.className = 'tag tag-volto';
+  tag.textContent = 'volto';
+  const ts = document.createElement('span');
+  ts.textContent = new Date().toLocaleTimeString();
+  meta.appendChild(tag);
+  meta.appendChild(ts);
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'msg-body volto-body';
+
+  msgEl.appendChild(meta);
+  msgEl.appendChild(bodyEl);
+  output.appendChild(msgEl);
+  scrollToBottom();
+  return { msgEl, bodyEl };
+}
+
+function addMessage(type, sender, text) {
+  const output = document.getElementById('output');
+  document.getElementById('empty-state')?.remove();
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'msg';
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  const tag = document.createElement('span');
+  tag.className = `tag tag-${type}`;
+  tag.textContent = sender;
+  const ts = document.createElement('span');
+  ts.textContent = new Date().toLocaleTimeString();
+  meta.appendChild(tag);
+  meta.appendChild(ts);
+
+  const bodyEl = document.createElement('div');
+  bodyEl.className = `msg-body ${type}-body`;
+
+  if (type === 'user') {
+    renderOutput(bodyEl, text);
+  } else {
+    bodyEl.textContent = text;
+  }
+
+  msgEl.appendChild(meta);
+  msgEl.appendChild(bodyEl);
+  output.appendChild(msgEl);
+  scrollToBottom();
+}
+
+function clearOutput() {
+  if (currentController) { currentController.abort(); }
+  const output = document.getElementById('output');
+  output.innerHTML = `<div class="empty-state" id="empty-state">
+    <div class="big">&gt;_</div>
+    <p>Send a query to begin testing.</p>
+    <p style="margin-top:4px">Configure model and variant in the sidebar.</p>
+  </div>`;
+}
+
+function scrollToBottom() {
+  const o = document.getElementById('output');
+  o.scrollTop = o.scrollHeight;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendQuery();
+  }
+}
+
+document.getElementById('host').addEventListener('change', () => { checkStatus(); fetchModels(); });
+</script>
+</body>
+</html>

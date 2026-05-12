@@ -1,0 +1,754 @@
+{
+  "data": [
+    {
+      "id": "protected.o3",
+      "name": "o3",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.o3",
+        "name": "o3",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Opus 4.1",
+      "name": "Claude Opus 4.1",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Opus 4.1",
+        "name": "Claude Opus 4.1",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Opus 4.6",
+      "name": "Claude Opus 4.6",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Opus 4.6",
+        "name": "Claude Opus 4.6",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude 3.5 Haiku",
+      "name": "Claude 3.5 Haiku",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude 3.5 Haiku",
+        "name": "Claude 3.5 Haiku",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude-Haiku-4.5",
+      "name": "Claude-Haiku-4.5",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude-Haiku-4.5",
+        "name": "Claude-Haiku-4.5",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Sonnet 4.6",
+      "name": "Claude Sonnet 4.6",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Sonnet 4.6",
+        "name": "Claude Sonnet 4.6",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5.4-nano",
+      "name": "gpt-5.4-nano",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5.4-nano",
+        "name": "gpt-5.4-nano",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Opus 4.5",
+      "name": "Claude Opus 4.5",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Opus 4.5",
+        "name": "Claude Opus 4.5",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gemini-2.0-flash",
+      "name": "gemini-2.0-flash",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gemini-2.0-flash",
+        "name": "gemini-2.0-flash",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Sonnet 4.5",
+      "name": "Claude Sonnet 4.5",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Sonnet 4.5",
+        "name": "Claude Sonnet 4.5",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5-nano",
+      "name": "gpt-5-nano",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5-nano",
+        "name": "gpt-5-nano",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gemini-2.0-flash-lite",
+      "name": "gemini-2.0-flash-lite",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gemini-2.0-flash-lite",
+        "name": "gemini-2.0-flash-lite",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gemini-2.5-pro",
+      "name": "gemini-2.5-pro",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gemini-2.5-pro",
+        "name": "gemini-2.5-pro",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.text-embedding-3-small",
+      "name": "text-embedding-3-small",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.text-embedding-3-small",
+        "name": "text-embedding-3-small",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.o4-mini",
+      "name": "o4-mini",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.o4-mini",
+        "name": "o4-mini",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gemini-2.5-flash-lite",
+      "name": "gemini-2.5-flash-lite",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gemini-2.5-flash-lite",
+        "name": "gemini-2.5-flash-lite",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.Claude Sonnet 4",
+      "name": "Claude Sonnet 4",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.Claude Sonnet 4",
+        "name": "Claude Sonnet 4",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-4o",
+      "name": "gpt-4o",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-4o",
+        "name": "gpt-4o",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-4.1",
+      "name": "gpt-4.1",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-4.1",
+        "name": "gpt-4.1",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.o3-mini",
+      "name": "o3-mini",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.o3-mini",
+        "name": "o3-mini",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5-mini",
+      "name": "gpt-5-mini",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5-mini",
+        "name": "gpt-5-mini",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gemini-2.5-flash",
+      "name": "gemini-2.5-flash",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gemini-2.5-flash",
+        "name": "gemini-2.5-flash",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.llama3.2",
+      "name": "llama3.2",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.llama3.2",
+        "name": "llama3.2",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5",
+      "name": "gpt-5",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5",
+        "name": "gpt-5",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5.1",
+      "name": "gpt-5.1",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5.1",
+        "name": "gpt-5.1",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5.4-mini",
+      "name": "gpt-5.4-mini",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5.4-mini",
+        "name": "gpt-5.4-mini",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5.2",
+      "name": "gpt-5.2",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5.2",
+        "name": "gpt-5.2",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-4.1-mini",
+      "name": "gpt-4.1-mini",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-4.1-mini",
+        "name": "gpt-4.1-mini",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-4.1-nano",
+      "name": "gpt-4.1-nano",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-4.1-nano",
+        "name": "gpt-4.1-nano",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    },
+    {
+      "id": "protected.gpt-5.4",
+      "name": "gpt-5.4",
+      "object": "model",
+      "created": 1778618873,
+      "owned_by": "openai",
+      "pipeline": {
+        "type": "manifold",
+        "valves": true
+      },
+      "connection_type": "external",
+      "openai": {
+        "id": "protected.gpt-5.4",
+        "name": "gpt-5.4",
+        "object": "model",
+        "created": 1778618873,
+        "owned_by": "openai",
+        "pipeline": {
+          "type": "manifold",
+          "valves": true
+        },
+        "connection_type": "external"
+      },
+      "urlIdx": 0
+    }
+  ]
+}

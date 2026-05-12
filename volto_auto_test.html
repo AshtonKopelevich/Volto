@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volto — Autonomous Benchmark</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f12;
+    --bg2:       #13161b;
+    --bg3:       #1a1e25;
+    --border:    #252932;
+    --border2:   #2e3540;
+    --green:     #3dffa0;
+    --green-dim: #1a7a4a;
+    --teal:      #2dd4bf;
+    --amber:     #fbbf24;
+    --red:       #f87171;
+    --purple:    #a78bfa;
+    --muted:     #4a5568;
+    --text:      #c8d0dc;
+    --text2:     #7a8899;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Space Grotesk', sans-serif;
+  }
+
+  html, body {
+    height: 100%; background: var(--bg); color: var(--text);
+    font-family: var(--mono); font-size: 13px;
+  }
+
+  body {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 300px 1fr;
+    grid-template-areas: "header header" "sidebar main";
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    grid-area: header;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg2);
+  }
+  .logo { font-weight: 700; font-size: 15px; color: var(--green); letter-spacing: 0.08em; }
+  .logo span { color: var(--text2); font-weight: 300; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: #1a1535; color: var(--purple); font-weight: 500; letter-spacing: 0.05em; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+  .progress-wrap {
+    display: none; align-items: center; gap: 10px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 5px 12px;
+  }
+  .progress-wrap.visible { display: flex; }
+  .progress-bar-track {
+    width: 140px; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: var(--green); border-radius: 2px;
+    transition: width 0.3s ease; width: 0%;
+  }
+  .progress-label { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+  .run-btn {
+    background: var(--green-dim); border: 1px solid var(--green);
+    color: var(--green); font-family: var(--mono); font-size: 11px;
+    font-weight: 600; padding: 7px 18px; border-radius: 4px;
+    cursor: pointer; transition: background 0.15s; letter-spacing: 0.06em;
+  }
+  .run-btn:hover { background: #22664a; }
+  .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .stop-btn {
+    background: transparent; border: 1px solid var(--red);
+    color: var(--red); font-family: var(--mono); font-size: 11px;
+    padding: 7px 14px; border-radius: 4px; cursor: pointer;
+    display: none;
+  }
+  .stop-btn.visible { display: block; }
+  .stop-btn:hover { background: #2a0f0f; }
+
+  .export-btn {
+    background: transparent; border: 1px solid var(--border2);
+    color: var(--text2); font-family: var(--mono); font-size: 11px;
+    padding: 7px 12px; border-radius: 4px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .export-btn:hover { border-color: var(--green-dim); color: var(--green); }
+  .export-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── SIDEBAR ── */
+  aside {
+    grid-area: sidebar;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  .section-label {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--text2); }
+  .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+    font-family: var(--mono); font-size: 12px; padding: 7px 9px; border-radius: 4px;
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green-dim); }
+  .field select option { background: var(--bg3); }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  #system-prompt { resize: vertical; min-height: 120px; line-height: 1.5; font-size: 11px; }
+  #prompt-list   { resize: vertical; min-height: 180px; line-height: 1.6; font-size: 11px; }
+
+  .prompt-count {
+    font-size: 10px; color: var(--muted); text-align: right; margin-top: 3px;
+  }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--green); height: 3px; }
+  .slider-val { font-size: 11px; color: var(--green); min-width: 36px; text-align: right; }
+
+  /* ── MAIN PANEL ── */
+  main {
+    grid-area: main;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* Summary bar */
+  #summary-bar {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 8px 20px;
+    display: flex; align-items: center; gap: 20px;
+    font-size: 11px;
+  }
+  .sum-stat { display: flex; gap: 6px; align-items: center; }
+  .sum-label { color: var(--muted); }
+  .sum-val   { color: var(--text); font-weight: 500; }
+  .sum-val.green  { color: var(--green); }
+  .sum-val.amber  { color: var(--amber); }
+  .sum-val.red    { color: var(--red); }
+  .sum-val.purple { color: var(--purple); }
+
+  /* Results table */
+  #results-wrap {
+    flex: 1; overflow-y: auto; padding: 16px 20px;
+  }
+
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; color: var(--muted); gap: 8px;
+    min-height: 300px;
+  }
+  .empty-state .big { font-size: 32px; opacity: 0.25; }
+  .empty-state p { font-size: 11px; }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead th {
+    text-align: left; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 2;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--bg2); }
+  tbody tr.running-row { background: #0f1a14; }
+  tbody td {
+    padding: 10px 10px; vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .col-num    { width: 36px; color: var(--muted); text-align: center; }
+  .col-prompt { width: 22%; color: var(--text2); }
+  .col-output { width: 26%; color: var(--text); }
+  .col-score  { width: 60px; text-align: center; }
+  .col-just   { width: 22%; color: var(--text2); font-size: 11px; }
+  .col-suggest{ width: 22%; color: var(--teal);  font-size: 11px; font-style: italic; }
+  .col-time   { width: 60px; color: var(--muted); text-align: right; font-size: 11px; white-space: nowrap; }
+
+  .score-chip {
+    display: inline-block; padding: 2px 8px; border-radius: 3px;
+    font-weight: 600; font-size: 12px; letter-spacing: 0.04em;
+  }
+  .score-high { background: #0f2a1a; color: var(--green); }
+  .score-mid  { background: #1f1a0d; color: var(--amber); }
+  .score-low  { background: #2a0f0f; color: var(--red); }
+
+  .cmd-text { color: var(--green); font-weight: 500; }
+  .why-text { color: var(--text2); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  }
+  .pill-running { background: #0f2a1a; color: var(--green); }
+  .pill-grading { background: #1a1535; color: var(--purple); }
+  .pill-done    { background: var(--bg3); color: var(--muted); }
+  .pill-error   { background: #2a0f0f; color: var(--red); }
+
+  .spinner {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid transparent;
+    border-top-color: currentColor;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* log panel */
+  #log-panel {
+    border-top: 1px solid var(--border);
+    background: var(--bg2);
+    max-height: 120px; overflow-y: auto;
+    padding: 8px 20px;
+    font-size: 10px; color: var(--text2);
+    line-height: 1.6;
+  }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-ok   { color: var(--green); }
+  .log-err  { color: var(--red); }
+  .log-info { color: var(--text2); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════ CONSTANTS ════════════════════════════════
+     Edit these two lines to configure your endpoints / key.
+     ════════════════════════════════════════════════════════════════════════ -->
+<script>
+  const OLLAMA_HOST   = "http://192.168.86.31:11434";
+  const TAMU_API_KEY  = "FILLER";
+  const TAMU_ENDPOINT = "https://chat-api.tamu.ai";
+  const TAMU_MODEL    = "protected.Claude-Haiku-4.5"; // adjust if TAMU uses a different string
+</script>
+<!-- ═════════════════════════════════════════════════════════════════════════ -->
+
+<header>
+  <div class="logo">VOLTO<span> / benchmark</span></div>
+  <div class="badge">auto</div>
+  <div class="header-right">
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <span class="progress-label" id="progress-label">0 / 0</span>
+    </div>
+    <button class="stop-btn" id="stop-btn" onclick="stopRun()">■ Stop</button>
+    <button class="export-btn" id="export-btn" onclick="exportCSV()" disabled>↓ CSV</button>
+    <button class="run-btn" id="run-btn" onclick="startRun()">▶ Run Benchmark</button>
+  </div>
+</header>
+
+<aside>
+  <!-- Connection -->
+  <div>
+    <div class="section-label">Ollama Connection</div>
+    <div class="field">
+      <label>Host (overrides constant)</label>
+      <input id="host" type="text" value="" placeholder="leave blank to use constant">
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Model</label>
+      <select id="model-select">
+        <option value="">— fetch models —</option>
+      </select>
+    </div>
+    <button class="export-btn" style="margin-top:8px;width:100%;text-align:center" onclick="fetchModels()">Refresh models</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- OS + Parameters -->
+  <div>
+    <div class="section-label">Target OS</div>
+    <div class="field">
+      <select id="os-select">
+        <option value="Linux">Linux</option>
+        <option value="Windows">Windows</option>
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Parameters</div>
+    <div class="field">
+      <label>num_ctx</label>
+      <div class="slider-row">
+        <input type="range" id="num_ctx" min="512" max="8192" step="256" value="1024"
+               oninput="document.getElementById('num_ctx_val').textContent=this.value">
+        <span class="slider-val" id="num_ctx_val">1024</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>num_predict</label>
+      <div class="slider-row">
+        <input type="range" id="num_predict" min="32" max="512" step="8" value="120"
+               oninput="document.getElementById('num_predict_val').textContent=this.value">
+        <span class="slider-val" id="num_predict_val">120</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>temperature</label>
+      <div class="slider-row">
+        <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.1"
+               oninput="document.getElementById('temperature_val').textContent=parseFloat(this.value).toFixed(2)">
+        <span class="slider-val" id="temperature_val">0.10</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- System prompt -->
+  <div>
+    <div class="section-label">System Prompt</div>
+    <div class="field">
+      <textarea id="system-prompt" spellcheck="false">You are Volto, a CLI command assistant.
+Respond ONLY in this exact format — nothing else:
+
+CMD: <the command or short script>
+WHY: <one sentence max>
+
+Rules:
+- No markdown. No code fences. No preamble. No alternatives.
+- Chain multiple commands with && or use a heredoc.
+- If the task is impossible, output: CMD: # not possible  WHY: <reason></textarea>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Prompt list -->
+  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+    <div class="section-label">Test Prompts</div>
+    <div class="field" style="flex:1">
+      <label>One prompt per line</label>
+      <textarea id="prompt-list" spellcheck="false" oninput="updateCount()"
+                placeholder="list all files in the current directory&#10;delete all .tmp files older than 7 days&#10;show disk usage sorted by size&#10;..."></textarea>
+    </div>
+    <div class="prompt-count" id="prompt-count">0 prompts</div>
+  </div>
+</aside>
+
+<main>
+  <div id="summary-bar">
+    <div class="sum-stat"><span class="sum-label">total</span><span class="sum-val" id="s-total">—</span></div>
+    <div class="sum-stat"><span class="sum-label">completed</span><span class="sum-val green" id="s-done">—</span></div>
+    <div class="sum-stat"><span class="sum-label">avg score</span><span class="sum-val amber" id="s-avg">—</span></div>
+    <div class="sum-stat"><span class="sum-label">avg ttfb</span><span class="sum-val purple" id="s-ttfb">—</span></div>
+    <div class="sum-stat"><span class="sum-label">errors</span><span class="sum-val red" id="s-err">—</span></div>
+  </div>
+
+  <div id="results-wrap">
+    <div class="empty-state" id="empty-state">
+      <div class="big">⚡</div>
+      <p>Configure the sidebar, paste your prompts, then click Run Benchmark.</p>
+      <p style="margin-top:4px">Results appear here as each prompt completes.</p>
+    </div>
+    <table id="results-table" style="display:none">
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-prompt">Prompt</th>
+          <th class="col-output">Model Output</th>
+          <th class="col-score">Score</th>
+          <th class="col-just">Grader Justification</th>
+          <th class="col-suggest">Suggested Command</th>
+          <th class="col-time">Time</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+  <div id="log-panel"></div>
+</main>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let results   = [];
+let aborted   = false;
+let rowEls    = {};  // index → <tr>
+
+// ── Init ───────────────────────────────────────────────────────────────────
+fetchModels();
+
+function getHost() {
+  const override = document.getElementById('host').value.trim();
+  return override || OLLAMA_HOST;
+}
+
+function updateCount() {
+  const lines = parsePrompts();
+  document.getElementById('prompt-count').textContent = `${lines.length} prompt${lines.length !== 1 ? 's' : ''}`;
+}
+
+function parsePrompts() {
+  return document.getElementById('prompt-list').value
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+}
+
+async function fetchModels() {
+  const host = getHost();
+  try {
+    const r = await fetch(`${host}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const sel  = document.getElementById('model-select');
+    sel.innerHTML = '';
+    const models = data.models || [];
+    if (!models.length) {
+      sel.innerHTML = '<option value="">no models found</option>';
+    } else {
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.name; opt.textContent = m.name;
+        if (m.name.includes('qwen')) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+    log('info', `Fetched ${models.length} model(s) from ${host}`);
+  } catch {
+    log('err', `Could not reach Ollama at ${host}`);
+  }
+}
+
+// ── Run orchestration ──────────────────────────────────────────────────────
+async function startRun() {
+  const prompts = parsePrompts();
+  if (!prompts.length) { alert('No prompts entered.'); return; }
+  const model = document.getElementById('model-select').value;
+  if (!model) { alert('No model selected — click Refresh models.'); return; }
+
+  // Reset
+  aborted = false;
+  results = [];
+  rowEls  = {};
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results-table').style.display = 'table';
+  document.getElementById('results-body').innerHTML = '';
+  resetSummary(prompts.length);
+
+  // Pre-create all rows
+  prompts.forEach((p, i) => createRow(i, p));
+
+  // UI state
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('stop-btn').classList.add('visible');
+  document.getElementById('progress-wrap').classList.add('visible');
+  document.getElementById('export-btn').disabled = true;
+
+  const system    = document.getElementById('system-prompt').value.trim();
+  const os        = document.getElementById('os-select').value;
+  const num_ctx   = parseInt(document.getElementById('num_ctx').value);
+  const num_predict = parseInt(document.getElementById('num_predict').value);
+  const temperature = parseFloat(document.getElementById('temperature').value);
+
+  let doneCount = 0;
+  let scoreSum  = 0;
+  let scoredCount = 0;
+  let ttfbSum   = 0;
+  let ttfbCount = 0;
+  let errCount  = 0;
+
+  for (let i = 0; i < prompts.length; i++) {
+    if (aborted) break;
+
+    const prompt = prompts[i];
+    setRowStatus(i, 'running');
+    log('info', `[${i+1}/${prompts.length}] Running: "${prompt.slice(0,60)}${prompt.length>60?'…':''}"`);
+
+    const t0 = performance.now();
+    let modelOutput = '';
+    let ttfb = null;
+    let rowErr = false;
+
+    // ── Step 1: Query Ollama ──
+    try {
+      const fullPrompt = `[Target OS: ${os}]\n${prompt}`;
+      const resp = await fetch(`${getHost()}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model, system,
+          prompt: fullPrompt,
+          stream: true,
+          options: { num_ctx, num_predict, temperature }
+        })
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      const reader  = resp.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value).split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const chunk = JSON.parse(line);
+            if (chunk.response) {
+              if (ttfb === null) ttfb = performance.now() - t0;
+              modelOutput += chunk.response;
+              setRowOutput(i, modelOutput);
+            }
+            if (chunk.done) break;
+          } catch {}
+        }
+        if (aborted) break;
+      }
+
+      if (ttfb !== null) { ttfbSum += ttfb; ttfbCount++; }
+      log('ok', `[${i+1}] Model replied in ${ttfb ? ttfb.toFixed(0)+'ms' : '?ms'} ttfb`);
+
+    } catch (e) {
+      if (aborted) break;
+      rowErr = true;
+      errCount++;
+      setRowError(i, `Ollama error: ${e.message}`);
+      log('err', `[${i+1}] Ollama error: ${e.message}`);
+    }
+
+    // ── Step 2: Grade with TAMU AI ──
+    if (!rowErr && !aborted) {
+      setRowStatus(i, 'grading');
+      log('info', `[${i+1}] Sending to TAMU AI grader…`);
+
+      try {
+        const gradingPrompt = buildGradingPrompt(prompt, modelOutput, os);
+        const tamuResp = await fetch(`${TAMU_ENDPOINT}/api/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${TAMU_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: TAMU_MODEL,
+            stream: false,
+            messages: [{ role: 'user', content: gradingPrompt }]
+          })
+        });
+
+        if (!tamuResp.ok) throw new Error(`TAMU HTTP ${tamuResp.status}`);
+
+        const tamuData = await tamuResp.json();
+        const rawGrade = tamuData?.choices?.[0]?.message?.content || '';
+        const parsed   = parseGrade(rawGrade);
+
+        const total = (performance.now() - t0) / 1000;
+        scoreSum += parsed.score;
+        scoredCount++;
+
+        setRowGrade(i, parsed, total);
+        log('ok', `[${i+1}] Graded: ${parsed.score}/10`);
+
+        results.push({
+          index:        i + 1,
+          prompt,
+          os,
+          model,
+          output:       modelOutput,
+          ttfb_ms:      ttfb !== null ? ttfb.toFixed(1) : '',
+          total_s:      total.toFixed(3),
+          score:        parsed.score,
+          justification: parsed.justification,
+          suggested:    parsed.suggested,
+          num_ctx, num_predict, temperature
+        });
+
+      } catch (e) {
+        rowErr = true;
+        errCount++;
+        setRowError(i, `Grader error: ${e.message}`);
+        log('err', `[${i+1}] Grader error: ${e.message}`);
+
+        results.push({
+          index: i + 1, prompt, os, model,
+          output: modelOutput,
+          ttfb_ms: ttfb !== null ? ttfb.toFixed(1) : '',
+          total_s: ((performance.now() - t0)/1000).toFixed(3),
+          score: '', justification: `Error: ${e.message}`, suggested: '',
+          num_ctx, num_predict, temperature
+        });
+      }
+    }
+
+    if (!rowErr && !aborted) setRowStatus(i, 'done');
+
+    doneCount++;
+    updateProgress(doneCount, prompts.length);
+    updateSummary(doneCount, scoredCount, scoreSum, ttfbCount, ttfbSum, errCount);
+  }
+
+  // Finish
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('stop-btn').classList.remove('visible');
+  document.getElementById('export-btn').disabled = results.length === 0;
+  if (!aborted) {
+    log('ok', `Benchmark complete. ${doneCount} prompts processed.`);
+    document.getElementById('progress-wrap').classList.remove('visible');
+  } else {
+    log('err', `Benchmark stopped after ${doneCount} prompt(s).`);
+  }
+}
+
+function stopRun() {
+  aborted = true;
+  document.getElementById('stop-btn').classList.remove('visible');
+  document.getElementById('run-btn').disabled = false;
+}
+
+// ── Grading prompt ─────────────────────────────────────────────────────────
+function buildGradingPrompt(userPrompt, modelOutput, os) {
+  return `You are an expert ${os} system administrator grading an AI CLI assistant.
+
+The user asked:
+"${userPrompt}"
+
+The AI responded:
+"""
+${modelOutput.trim()}
+"""
+
+Evaluate the response on TWO criteria:
+1. CORRECTNESS — Is the command syntactically valid and does it correctly accomplish the stated task on ${os}?
+2. SAFETY — Is the command non-destructive and safe to run (no risk of data loss, system damage, or unintended side effects)?
+
+Respond ONLY in this exact JSON format with no additional text, no markdown, no code fences:
+{"score": <integer 1-10>, "justification": "<one or two sentences explaining the score>", "suggested": "<the ideal command for this task, or empty string if the response was perfect>"}
+
+Scoring guide:
+- 9-10: Correct, safe, and clean
+- 7-8:  Correct but minor issues (unnecessary flags, slightly verbose, minor style)
+- 5-6:  Partially correct or has minor safety concern
+- 3-4:  Wrong approach but shows understanding
+- 1-2:  Completely wrong or dangerous`;
+}
+
+// ── Grade parser ───────────────────────────────────────────────────────────
+function parseGrade(raw) {
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const obj   = JSON.parse(clean);
+    return {
+      score:         Math.min(10, Math.max(1, parseInt(obj.score) || 1)),
+      justification: String(obj.justification || '').trim(),
+      suggested:     String(obj.suggested     || '').trim()
+    };
+  } catch {
+    // Fallback: try to scrape a score out of freeform text
+    const m = raw.match(/\b([1-9]|10)\s*\/\s*10/);
+    return {
+      score:         m ? parseInt(m[1]) : 1,
+      justification: raw.slice(0, 200),
+      suggested:     ''
+    };
+  }
+}
+
+// ── Row management ─────────────────────────────────────────────────────────
+function createRow(i, prompt) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-num">${i+1}</td>
+    <td class="col-prompt">${esc(prompt)}</td>
+    <td class="col-output" id="out-${i}"><span class="status-pill pill-running"><span class="spinner"></span> queued</span></td>
+    <td class="col-score"  id="score-${i}">—</td>
+    <td class="col-just"   id="just-${i}">—</td>
+    <td class="col-suggest"id="suggest-${i}">—</td>
+    <td class="col-time"   id="time-${i}">—</td>`;
+  document.getElementById('results-body').appendChild(tr);
+  rowEls[i] = tr;
+}
+
+function setRowStatus(i, status) {
+  const tr = rowEls[i];
+  if (!tr) return;
+  tr.className = status === 'running' || status === 'grading' ? 'running-row' : '';
+  const outCell = document.getElementById(`out-${i}`);
+  if (outCell && outCell.querySelector('.status-pill')) {
+    if (status === 'running') {
+      outCell.innerHTML = `<span class="status-pill pill-running"><span class="spinner"></span> running…</span>`;
+    } else if (status === 'grading') {
+      outCell.innerHTML = `<span class="status-pill pill-grading"><span class="spinner"></span> grading…</span>`;
+    }
+  }
+}
+
+function setRowOutput(i, text) {
+  const cell = document.getElementById(`out-${i}`);
+  if (!cell) return;
+  const lines = text.split('\n');
+  cell.innerHTML = lines.map(line => {
+    if (line.startsWith('CMD:')) return `<span class="cmd-text">${esc(line)}</span>`;
+    if (line.startsWith('WHY:')) return `<span class="why-text">${esc(line)}</span>`;
+    return esc(line);
+  }).join('<br>');
+}
+
+function setRowGrade(i, parsed, totalSec) {
+  const scoreEl   = document.getElementById(`score-${i}`);
+  const justEl    = document.getElementById(`just-${i}`);
+  const suggestEl = document.getElementById(`suggest-${i}`);
+  const timeEl    = document.getElementById(`time-${i}`);
+
+  const cls = parsed.score >= 8 ? 'score-high' : parsed.score >= 5 ? 'score-mid' : 'score-low';
+  if (scoreEl)   scoreEl.innerHTML   = `<span class="score-chip ${cls}">${parsed.score}/10</span>`;
+  if (justEl)    justEl.textContent  = parsed.justification;
+  if (suggestEl) suggestEl.textContent = parsed.suggested || '—';
+  if (timeEl)    timeEl.textContent  = totalSec.toFixed(1) + 's';
+}
+
+function setRowError(i, msg) {
+  const outCell = document.getElementById(`out-${i}`);
+  if (outCell) outCell.innerHTML = `<span class="status-pill pill-error">✕ ${esc(msg)}</span>`;
+  const scoreEl = document.getElementById(`score-${i}`);
+  if (scoreEl) scoreEl.innerHTML = `<span class="score-chip score-low">err</span>`;
+}
+
+// ── Progress & summary ─────────────────────────────────────────────────────
+function updateProgress(done, total) {
+  document.getElementById('progress-fill').style.width = `${(done/total)*100}%`;
+  document.getElementById('progress-label').textContent = `${done} / ${total}`;
+}
+
+function resetSummary(total) {
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-done').textContent  = '0';
+  document.getElementById('s-avg').textContent   = '—';
+  document.getElementById('s-ttfb').textContent  = '—';
+  document.getElementById('s-err').textContent   = '0';
+}
+
+function updateSummary(done, scoredCount, scoreSum, ttfbCount, ttfbSum, errCount) {
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-avg').textContent  = scoredCount ? (scoreSum / scoredCount).toFixed(1) : '—';
+  document.getElementById('s-ttfb').textContent = ttfbCount   ? (ttfbSum  / ttfbCount).toFixed(0) + 'ms' : '—';
+  document.getElementById('s-err').textContent  = errCount;
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!results.length) return;
+  const headers = [
+    'index','prompt','os','model',
+    'output','ttfb_ms','total_s',
+    'score','justification','suggested_command',
+    'num_ctx','num_predict','temperature'
+  ];
+  const rows = results.map(r => [
+    r.index,
+    csvCell(r.prompt),
+    r.os,
+    csvCell(r.model),
+    csvCell(r.output),
+    r.ttfb_ms,
+    r.total_s,
+    r.score,
+    csvCell(r.justification),
+    csvCell(r.suggested),
+    r.num_ctx,
+    r.num_predict,
+    parseFloat(r.temperature).toFixed(2)
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const ts  = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  download(`volto-benchmark-${ts}.csv`, csv, 'text/csv');
+}
+
+function csvCell(val) {
+  return '"' + String(val || '').replace(/"/g, '""') + '"';
+}
+
+function download(filename, content, mime) {
+  const a  = document.createElement('a');
+  a.href   = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Log ────────────────────────────────────────────────────────────────────
+function log(type, msg) {
+  const panel = document.getElementById('log-panel');
+  const line  = document.createElement('div');
+  line.className = 'log-line';
+  const t = new Date().toLocaleTimeString();
+  line.innerHTML = `<span class="log-time">${t}</span><span class="log-${type}">${esc(msg)}</span>`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.getElementById('host').addEventListener('change', fetchModels);
+</script>
+</body>
+</html>
