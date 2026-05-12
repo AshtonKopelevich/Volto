@@ -2,13 +2,14 @@ import sys
 import json
 import os
 import platform
-import subprocess
-import requests
 import threading
+import requests
 from pathlib import Path
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
+ENV_PATH = Path(__file__).parent / ".env"
 FILE_LINE_LIMIT = 500
+DIRECTORY_ENTRY_LIMIT = 50
 
 
 def load_config():
@@ -19,9 +20,25 @@ def load_config():
         return json.load(f)
 
 
+def load_env():
+    if not ENV_PATH.exists():
+        print("Error: .env not found next to client.py")
+        sys.exit(1)
+    env = {}
+    with open(ENV_PATH) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, value = line.partition("=")
+                env[key.strip()] = value.strip()
+    if "TAMUS_API_KEY" not in env:
+        print("Error: TAMUS_API_KEY not set in .env")
+        sys.exit(1)
+    return env
+
+
 def detect_environment():
     if platform.system() == "Windows":
-        # Check if running inside PowerShell
         parent = os.environ.get("PSMODULEPATH", "")
         if parent:
             return "PowerShell on Windows"
@@ -29,11 +46,7 @@ def detect_environment():
     return "bash on Linux"
 
 
-def cancel(base_url):
-    try:
-        requests.post(f"{base_url}/cancel", timeout=3)
-    except Exception:
-        pass
+def cancel():
     print("\n[cancelled]")
 
 
@@ -41,7 +54,11 @@ def get_directory_context():
     cwd = Path.cwd()
     lines = [f"Current directory: {cwd}", "Contents (1 level):"]
     try:
-        for entry in sorted(cwd.iterdir()):
+        entries = sorted(cwd.iterdir())
+        if len(entries) > DIRECTORY_ENTRY_LIMIT:
+            print(f"Warning: Directory has {len(entries)} entries, showing first {DIRECTORY_ENTRY_LIMIT}.")
+            entries = entries[:DIRECTORY_ENTRY_LIMIT]
+        for entry in entries:
             kind = "[dir] " if entry.is_dir() else "[file]"
             lines.append(f"  {kind} {entry.name}")
     except PermissionError:
@@ -57,31 +74,18 @@ def get_file_context(filepath):
     if not path.is_file():
         print(f"Error: Not a file: {filepath}")
         sys.exit(1)
-
     with open(path, "r", errors="replace") as f:
         all_lines = f.readlines()
-
-    truncated = len(all_lines) > FILE_LINE_LIMIT
-    lines = all_lines[:FILE_LINE_LIMIT]
-
-    if truncated:
-        print(f"Warning: {filepath} exceeds {FILE_LINE_LIMIT} lines. Truncated to first {FILE_LINE_LIMIT} lines.")
-
-    content = "".join(lines)
-    return f"File: {path}\n---\n{content}\n---"
+    if len(all_lines) > FILE_LINE_LIMIT:
+        print(f"Warning: {filepath} exceeds {FILE_LINE_LIMIT} lines. Truncated.")
+        all_lines = all_lines[:FILE_LINE_LIMIT]
+    return f"File: {path}\n---\n{''.join(all_lines)}\n---"
 
 
 def parse_args(argv):
-    """
-    Returns (flags, prompt_parts) where flags is a dict.
-    Supported:
-      --context / -c
-      --file <path> / -f <path>
-      -cf <path>  (shorthand for --context --file)
-    """
     flags = {"context": False, "file": None, "deep": False, "shallow": False}
     remaining = []
-    i = 1  # skip script name
+    i = 1
 
     while i < len(argv):
         arg = argv[i]
@@ -113,15 +117,29 @@ def parse_args(argv):
 
 def build_prompt(user_prompt, flags):
     parts = []
-
     if flags["context"]:
         parts.append(get_directory_context())
-
     if flags["file"]:
         parts.append(get_file_context(flags["file"]))
-
     parts.append(f"Task: {user_prompt}")
     return "\n\n".join(parts)
+
+
+SYSTEM_PROMPT = """You are Volto, a CLI command assistant for a trusted system administrator.
+
+Respond ONLY in this format:
+CMD: <command or short script>
+WHY: <one sentence max>
+
+Rules:
+- Do exactly what is asked. Nothing more, nothing less.
+- Never add destructive operations (rm, mkfs, dd, shred) unless explicitly requested.
+- Never chain commands after watch with &&. watch runs forever and blocks anything after it.
+- For scheduling tasks, always use crontab -e or write to /etc/cron.d/. Never use cron -f.
+- No markdown. No code fences. No preamble. No alternatives.
+- Prefer the simplest correct command.
+- If the task is impossible or ambiguous, output: CMD: # not possible  WHY: <reason>
+- The user's shell environment will be provided. Generate commands appropriate for that environment."""
 
 
 def main():
@@ -144,32 +162,55 @@ def main():
         sys.exit(0)
 
     config = load_config()
+    env = load_env()
     environment = detect_environment()
 
-    if flags["deep"]:
-        mode = "deep"
-    elif flags["shallow"]:
-        mode = "shallow"
-    else:
-        mode = "auto"
+    model = config["deep_model"] if flags["deep"] else config["default_model"]
+    if flags["shallow"]:
+        model = config["default_model"]
+        print("[warning: shallow mode forced]")
 
-    url = f"{config['server_host']}:{config['server_port']}"
-    payload = {"prompt": prompt, "mode": mode, "environment": environment}
+    system = SYSTEM_PROMPT + f"\n\nUser environment: {environment}"
+
+    url = f"{config['api_endpoint']}/api/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {env['TAMUS_API_KEY']}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": model,
+        "stream": True,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ]
+    }
 
     def stream_response():
         try:
-            with requests.post(f"{url}/command", json=payload, stream=True, timeout=120) as response:
+            with requests.post(url, headers=headers, json=body, stream=True, timeout=30) as response:
                 response.raise_for_status()
-                for chunk in response.iter_content(chunk_size=None):
-                    if chunk:
-                        print(chunk.decode("utf-8"), end="", flush=True)
+                for line in response.iter_lines():
+                    if line:
+                        line = line.decode("utf-8")
+                        if line.startswith("data: "):
+                            line = line[6:]
+                        if line == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(line)
+                            token = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            if token:
+                                print(token, end="", flush=True)
+                        except json.JSONDecodeError:
+                            pass
                 print()
         except requests.exceptions.Timeout:
-            cancel(url)
+            cancel()
         except requests.exceptions.ConnectionError:
-            print(f"Error: Cannot reach Volto server at {url}")
+            print(f"Error: Cannot reach TAMU API")
         except requests.exceptions.HTTPError as e:
-            print(f"Error: Server returned {e.response.status_code}")
+            print(f"Error: API returned {e.response.status_code}")
 
     thread = threading.Thread(target=stream_response, daemon=False)
     thread.start()
@@ -178,7 +219,7 @@ def main():
         while thread.is_alive():
             thread.join(timeout=0.1)
     except KeyboardInterrupt:
-        cancel(url)
+        cancel()
         sys.exit(0)
 
 

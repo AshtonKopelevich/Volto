@@ -1,4 +1,5 @@
 {
-    "server_host": "http://FILLER",
-    "server_port": 5000
+    "api_endpoint": "https://chat-api.tamu.ai",
+    "default_model": "protected.gemini-2.5-flash",
+    "deep_model": "protected.Claude Sonnet 4.6"
 }
