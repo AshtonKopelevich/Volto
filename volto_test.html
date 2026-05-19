@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volto — Benchmark</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f12;
+    --bg2:       #13161b;
+    --bg3:       #1a1e25;
+    --border:    #252932;
+    --border2:   #2e3540;
+    --green:     #3dffa0;
+    --green-dim: #1a7a4a;
+    --teal:      #2dd4bf;
+    --amber:     #fbbf24;
+    --red:       #f87171;
+    --purple:    #a78bfa;
+    --muted:     #4a5568;
+    --text:      #c8d0dc;
+    --text2:     #7a8899;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Space Grotesk', sans-serif;
+  }
+
+  html, body {
+    height: 100%; background: var(--bg); color: var(--text);
+    font-family: var(--mono); font-size: 13px;
+  }
+
+  body {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: 300px 1fr;
+    grid-template-areas: "header header" "sidebar main";
+    min-height: 100vh;
+  }
+
+  header {
+    grid-area: header;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 16px;
+    background: var(--bg2);
+  }
+  .logo { font-weight: 700; font-size: 15px; color: var(--green); letter-spacing: 0.08em; }
+  .logo span { color: var(--text2); font-weight: 300; }
+  .badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: #1a1535; color: var(--purple); font-weight: 500; letter-spacing: 0.05em; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+  .progress-wrap {
+    display: none; align-items: center; gap: 10px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 4px; padding: 5px 12px;
+  }
+  .progress-wrap.visible { display: flex; }
+  .progress-bar-track { width: 140px; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+  .progress-bar-fill  { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .progress-label     { font-size: 11px; color: var(--text2); white-space: nowrap; }
+
+  .run-btn {
+    background: var(--green-dim); border: 1px solid var(--green);
+    color: var(--green); font-family: var(--mono); font-size: 11px;
+    font-weight: 600; padding: 7px 18px; border-radius: 4px;
+    cursor: pointer; transition: background 0.15s; letter-spacing: 0.06em;
+  }
+  .run-btn:hover { background: #22664a; }
+  .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .stop-btn {
+    background: transparent; border: 1px solid var(--red);
+    color: var(--red); font-family: var(--mono); font-size: 11px;
+    padding: 7px 14px; border-radius: 4px; cursor: pointer; display: none;
+  }
+  .stop-btn.visible { display: block; }
+  .stop-btn:hover { background: #2a0f0f; }
+
+  .export-btn {
+    background: transparent; border: 1px solid var(--border2);
+    color: var(--text2); font-family: var(--mono); font-size: 11px;
+    padding: 7px 12px; border-radius: 4px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .export-btn:hover { border-color: var(--green-dim); color: var(--green); }
+  .export-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  aside {
+    grid-area: sidebar;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  .section-label {
+    font-size: 10px; color: var(--muted);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 11px; color: var(--text2); }
+  .field input, .field select, .field textarea {
+    background: var(--bg3); border: 1px solid var(--border2); color: var(--text);
+    font-family: var(--mono); font-size: 12px; padding: 7px 9px; border-radius: 4px;
+    outline: none; transition: border-color 0.15s; width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green-dim); }
+  .field select option { background: var(--bg3); }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  #system-prompt { resize: vertical; min-height: 120px; line-height: 1.5; font-size: 11px; }
+  #prompt-list   { resize: vertical; min-height: 180px; line-height: 1.6; font-size: 11px; }
+  .prompt-count  { font-size: 10px; color: var(--muted); text-align: right; margin-top: 3px; }
+
+  .slider-row { display: flex; align-items: center; gap: 8px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--green); height: 3px; }
+  .slider-val { font-size: 11px; color: var(--green); min-width: 36px; text-align: right; }
+
+  main {
+    grid-area: main;
+    display: flex; flex-direction: column;
+    overflow: hidden; background: var(--bg);
+  }
+
+  #summary-bar {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 8px 20px;
+    display: flex; align-items: center; gap: 20px;
+    font-size: 11px;
+  }
+  .sum-stat { display: flex; gap: 6px; align-items: center; }
+  .sum-label { color: var(--muted); }
+  .sum-val   { color: var(--text); font-weight: 500; }
+  .sum-val.green  { color: var(--green); }
+  .sum-val.amber  { color: var(--amber); }
+  .sum-val.purple { color: var(--purple); }
+  .sum-val.red    { color: var(--red); }
+
+  #results-wrap { flex: 1; overflow-y: auto; padding: 16px 20px; }
+
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; color: var(--muted); gap: 8px; min-height: 300px;
+  }
+  .empty-state .big { font-size: 32px; opacity: 0.25; }
+  .empty-state p { font-size: 11px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    text-align: left; font-size: 10px; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--bg); z-index: 2; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:hover { background: var(--bg2); }
+  tbody tr.running-row { background: #0f1a14; }
+  tbody td { padding: 10px 10px; vertical-align: top; line-height: 1.5; }
+
+  .col-num    { width: 36px; color: var(--muted); text-align: center; }
+  .col-prompt { width: 28%; color: var(--text2); }
+  .col-output { width: 58%; color: var(--text); }
+  .col-time   { width: 80px; color: var(--muted); text-align: right; font-size: 11px; white-space: nowrap; }
+
+  .cmd-text { color: var(--green); font-weight: 500; }
+  .why-text { color: var(--text2); }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  }
+  .pill-running { background: #0f2a1a; color: var(--green); }
+  .pill-error   { background: #2a0f0f; color: var(--red); }
+
+  .spinner {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1.5px solid transparent; border-top-color: currentColor;
+    animation: spin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #log-panel {
+    border-top: 1px solid var(--border); background: var(--bg2);
+    max-height: 120px; overflow-y: auto; padding: 8px 20px;
+    font-size: 10px; color: var(--text2); line-height: 1.6;
+  }
+  .log-line  { display: flex; gap: 10px; }
+  .log-time  { color: var(--muted); flex-shrink: 0; }
+  .log-ok    { color: var(--green); }
+  .log-err   { color: var(--red); }
+  .log-info  { color: var(--text2); }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<script>
+  const TAMU_ENDPOINT = "https://chat-api.tamu.ai";
+
+  const TAMU_MODELS = [
+    "protected.gemini-2.5-flash",
+    "protected.gemini-2.5-flash-lite",
+    "protected.gemini-2.0-flash",
+    "protected.gemini-2.0-flash-lite",
+    "protected.gemini-2.5-pro",
+    "protected.Claude-Haiku-4.5",
+    "protected.Claude 3.5 Haiku",
+    "protected.Claude Sonnet 4.6",
+    "protected.Claude Sonnet 4.5",
+    "protected.Claude Sonnet 4",
+    "protected.Claude Opus 4.6",
+    "protected.Claude Opus 4.5",
+    "protected.Claude Opus 4.1",
+    "protected.gpt-4o",
+    "protected.gpt-4.1",
+    "protected.gpt-4.1-mini",
+    "protected.gpt-4.1-nano",
+    "protected.gpt-5-nano",
+    "protected.gpt-5-mini",
+    "protected.gpt-5",
+    "protected.o3-mini",
+    "protected.o3",
+    "protected.o4-mini",
+    "protected.llama3.2"
+  ];
+</script>
+
+<header>
+  <div class="logo">VOLTO<span> / benchmark</span></div>
+  <div class="badge">tamu</div>
+  <div class="header-right">
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <span class="progress-label" id="progress-label">0 / 0</span>
+    </div>
+    <button class="stop-btn" id="stop-btn" onclick="stopRun()">■ Stop</button>
+    <button class="export-btn" id="export-btn" onclick="exportCSV()" disabled>↓ CSV</button>
+    <button class="run-btn" id="run-btn" onclick="startRun()">▶ Run Benchmark</button>
+  </div>
+</header>
+
+<aside>
+  <div>
+    <div class="section-label">TAMU API Key</div>
+    <div class="field">
+      <input id="api-key" type="password" placeholder="paste key here">
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">Model</div>
+    <div class="field">
+      <select id="model-select"></select>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">Target OS</div>
+    <div class="field">
+      <select id="os-select">
+        <option value="Linux">Linux</option>
+        <option value="Windows">Windows</option>
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Parameters</div>
+    <div class="field">
+      <label>temperature</label>
+      <div class="slider-row">
+        <input type="range" id="temperature" min="0" max="1" step="0.05" value="0.1"
+               oninput="document.getElementById('temperature_val').textContent=parseFloat(this.value).toFixed(2)">
+        <span class="slider-val" id="temperature_val">0.10</span>
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>max_tokens</label>
+      <div class="slider-row">
+        <input type="range" id="max_tokens" min="64" max="1024" step="16" value="300"
+               oninput="document.getElementById('max_tokens_val').textContent=this.value">
+        <span class="slider-val" id="max_tokens_val">300</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div>
+    <div class="section-label">System Prompt</div>
+    <div class="field">
+      <textarea id="system-prompt" spellcheck="false">You are Volto, a CLI command assistant.
+Respond ONLY in this exact format — nothing else:
+
+CMD: <the command or short script>
+WHY: <one sentence max>
+
+Rules:
+- No markdown. No code fences. No preamble. No alternatives.
+- Chain multiple commands with && or use a heredoc.
+- If the task is impossible, output: CMD: # not possible  WHY: <reason></textarea>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+    <div class="section-label">Test Prompts</div>
+    <div class="field" style="flex:1">
+      <label>One prompt per line</label>
+      <textarea id="prompt-list" spellcheck="false" oninput="updateCount()"
+                placeholder="list all files&#10;delete .tmp files older than 7 days&#10;show disk usage sorted by size"></textarea>
+    </div>
+    <div class="prompt-count" id="prompt-count">0 prompts</div>
+  </div>
+</aside>
+
+<main>
+  <div id="summary-bar">
+    <div class="sum-stat"><span class="sum-label">total</span><span class="sum-val" id="s-total">—</span></div>
+    <div class="sum-stat"><span class="sum-label">completed</span><span class="sum-val green" id="s-done">—</span></div>
+    <div class="sum-stat"><span class="sum-label">avg ttfb</span><span class="sum-val purple" id="s-ttfb">—</span></div>
+    <div class="sum-stat"><span class="sum-label">errors</span><span class="sum-val red" id="s-err">—</span></div>
+  </div>
+
+  <div id="results-wrap">
+    <div class="empty-state" id="empty-state">
+      <div class="big">⚡</div>
+      <p>Paste your API key, select a model, add prompts, then click Run Benchmark.</p>
+    </div>
+    <table id="results-table" style="display:none">
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-prompt">Prompt</th>
+          <th class="col-output">Output</th>
+          <th class="col-time">TTFB</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+
+  <div id="log-panel"></div>
+</main>
+
+<script>
+let results = [];
+let aborted = false;
+let rowEls  = {};
+
+// Populate model dropdown from hardcoded list
+(function initModels() {
+  const sel = document.getElementById('model-select');
+  TAMU_MODELS.forEach((m, i) => {
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = m.replace('protected.', '');
+    if (m.includes('gemini-2.5-flash') && !m.includes('lite')) opt.selected = true;
+    sel.appendChild(opt);
+  });
+})();
+
+function updateCount() {
+  const lines = parsePrompts();
+  document.getElementById('prompt-count').textContent = `${lines.length} prompt${lines.length !== 1 ? 's' : ''}`;
+}
+
+function parsePrompts() {
+  return document.getElementById('prompt-list').value
+    .split('\n').map(l => l.trim()).filter(Boolean);
+}
+
+async function startRun() {
+  const prompts = parsePrompts();
+  if (!prompts.length) { alert('No prompts entered.'); return; }
+
+  const apiKey = document.getElementById('api-key').value.trim();
+  if (!apiKey) { alert('API key required.'); return; }
+
+  const model       = document.getElementById('model-select').value;
+  const system      = document.getElementById('system-prompt').value.trim();
+  const os          = document.getElementById('os-select').value;
+  const temperature = parseFloat(document.getElementById('temperature').value);
+  const max_tokens  = parseInt(document.getElementById('max_tokens').value);
+
+  aborted = false;
+  results = [];
+  rowEls  = {};
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('results-table').style.display = 'table';
+  document.getElementById('results-body').innerHTML = '';
+  resetSummary(prompts.length);
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('stop-btn').classList.add('visible');
+  document.getElementById('progress-wrap').classList.add('visible');
+  document.getElementById('export-btn').disabled = true;
+
+  prompts.forEach((p, i) => createRow(i, p));
+
+  let doneCount = 0, ttfbSum = 0, ttfbCount = 0, errCount = 0;
+
+  for (let i = 0; i < prompts.length; i++) {
+    if (aborted) break;
+
+    const prompt = prompts[i];
+    setRowStatus(i, 'running');
+    log('info', `[${i+1}/${prompts.length}] "${prompt.slice(0,60)}${prompt.length>60?'…':''}"`);
+
+    const t0 = performance.now();
+    let ttfb = null;
+    let output = '';
+    let hasError = false;
+
+    try {
+      const resp = await fetch(`${TAMU_ENDPOINT}/api/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model,
+          stream: true,
+          temperature,
+          max_tokens,
+          messages: [
+            { role: 'system', content: system + `\n\nTarget OS: ${os}` },
+            { role: 'user',   content: prompt }
+          ]
+        })
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      const reader  = resp.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const lines = decoder.decode(value).split('\n').filter(Boolean);
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') break;
+          try {
+            const chunk = JSON.parse(data);
+            const token = chunk?.choices?.[0]?.delta?.content || '';
+            if (token) {
+              if (ttfb === null) ttfb = performance.now() - t0;
+              output += token;
+              setRowOutput(i, output);
+            }
+          } catch {}
+        }
+        if (aborted) break;
+      }
+
+      if (ttfb !== null) { ttfbSum += ttfb; ttfbCount++; }
+      log('ok', `[${i+1}] Done — TTFB ${ttfb ? ttfb.toFixed(0)+'ms' : '?'}`);
+
+    } catch (e) {
+      hasError = true;
+      errCount++;
+      setRowError(i, e.message);
+      log('err', `[${i+1}] ${e.message}`);
+    }
+
+    const totalMs = performance.now() - t0;
+
+    if (!hasError) {
+      setRowTime(i, ttfb);
+      results.push({
+        index: i + 1, prompt, os, model,
+        output, ttfb_ms: ttfb ? ttfb.toFixed(1) : '',
+        total_s: (totalMs / 1000).toFixed(3),
+        temperature, max_tokens
+      });
+    }
+
+    doneCount++;
+    updateProgress(doneCount, prompts.length);
+    updateSummary(doneCount, ttfbCount, ttfbSum, errCount);
+  }
+
+  document.getElementById('run-btn').disabled = false;
+  document.getElementById('stop-btn').classList.remove('visible');
+  document.getElementById('export-btn').disabled = results.length === 0;
+  document.getElementById('progress-wrap').classList.remove('visible');
+  log(aborted ? 'err' : 'ok', aborted ? `Stopped after ${doneCount}.` : `Complete. ${doneCount} prompts.`);
+}
+
+function stopRun() {
+  aborted = true;
+  document.getElementById('stop-btn').classList.remove('visible');
+  document.getElementById('run-btn').disabled = false;
+}
+
+// ── Row helpers ──
+function createRow(i, prompt) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-num">${i+1}</td>
+    <td class="col-prompt">${esc(prompt)}</td>
+    <td class="col-output" id="out-${i}"><span class="status-pill pill-running"><span class="spinner"></span> queued</span></td>
+    <td class="col-time"   id="time-${i}">—</td>`;
+  document.getElementById('results-body').appendChild(tr);
+  rowEls[i] = tr;
+}
+
+function setRowStatus(i, status) {
+  const tr = rowEls[i]; if (!tr) return;
+  tr.className = status === 'running' ? 'running-row' : '';
+  const cell = document.getElementById(`out-${i}`);
+  if (cell && cell.querySelector('.status-pill')) {
+    cell.innerHTML = `<span class="status-pill pill-running"><span class="spinner"></span> running…</span>`;
+  }
+}
+
+function setRowOutput(i, text) {
+  const cell = document.getElementById(`out-${i}`); if (!cell) return;
+  cell.innerHTML = text.split('\n').map(line => {
+    if (line.startsWith('CMD:')) return `<span class="cmd-text">${esc(line)}</span>`;
+    if (line.startsWith('WHY:')) return `<span class="why-text">${esc(line)}</span>`;
+    return esc(line);
+  }).join('<br>');
+}
+
+function setRowTime(i, ttfb) {
+  const cell = document.getElementById(`time-${i}`); if (!cell) return;
+  cell.textContent = ttfb ? ttfb.toFixed(0) + 'ms' : '—';
+}
+
+function setRowError(i, msg) {
+  const cell = document.getElementById(`out-${i}`);
+  if (cell) cell.innerHTML = `<span class="status-pill pill-error">✕ ${esc(msg)}</span>`;
+  const time = document.getElementById(`time-${i}`);
+  if (time) time.textContent = '—';
+}
+
+// ── Progress / summary ──
+function updateProgress(done, total) {
+  document.getElementById('progress-fill').style.width = `${(done/total)*100}%`;
+  document.getElementById('progress-label').textContent = `${done} / ${total}`;
+}
+
+function resetSummary(total) {
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-done').textContent  = '0';
+  document.getElementById('s-ttfb').textContent  = '—';
+  document.getElementById('s-err').textContent   = '0';
+}
+
+function updateSummary(done, ttfbCount, ttfbSum, errCount) {
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-ttfb').textContent = ttfbCount ? (ttfbSum/ttfbCount).toFixed(0)+'ms' : '—';
+  document.getElementById('s-err').textContent  = errCount;
+}
+
+// ── Export ──
+function exportCSV() {
+  if (!results.length) return;
+  const headers = ['index','prompt','os','model','output','ttfb_ms','total_s','temperature','max_tokens'];
+  const rows = results.map(r => [
+    r.index, csvCell(r.prompt), r.os, csvCell(r.model),
+    csvCell(r.output), r.ttfb_ms, r.total_s,
+    parseFloat(r.temperature).toFixed(2), r.max_tokens
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const ts  = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a   = document.createElement('a');
+  a.href    = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `volto-benchmark-${ts}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function csvCell(val) { return '"' + String(val||'').replace(/"/g,'""') + '"'; }
+
+function log(type, msg) {
+  const panel = document.getElementById('log-panel');
+  const line  = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-${type}">${esc(msg)}</span>`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
